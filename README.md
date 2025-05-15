@@ -1,7 +1,9 @@
 -- DATA CLEANING
+
 select * from layoffs;
 
 #Firstly creating a duplicate table same as layoffs - this might to do changes to the raw data in real time
+
 create table layoffs_alter like layoffs;
 insert layoffs_alter
 select * from layoffs;
@@ -10,6 +12,7 @@ select * from layoffs_alter;
 describe layoffs_alter;
 
 -- 1.Remove Duplicates
+
 with duplicate_cte as
 (
 	select *,row_number() 
@@ -24,6 +27,7 @@ where row_num>1;
 
 #we need to create another table with the extra column row_num
 #to create this i just gone to layoffs_alter table , right click,copy to clipboard
+
 CREATE TABLE `layoffs_rownum_added` (
   `company` text,
   `location` text,
@@ -54,13 +58,15 @@ where row_num >1; #deleted here
 
 select * from layoffs_rownum_added;
 
--- 2. remove any extra columnc
+-- 2. remove any extra columns
+
 alter table layoffs_rownum_added
 drop column row_num;
 
 describe layoffs_rownum_added;
 
 -- 3.standardisation of data - checking every row to keep clean data here
+
 #trim
 select company,trim(company) from layoffs_rownum_added; #white spaces removed
  
@@ -76,6 +82,7 @@ set company = trim(company); #updated the table without white space
  select country from layoffs_rownum_added;
  
 #removing different names of same department
+
 select distinct(industry) from layoffs_rownum_added;
  
 update layoffs_rownum_added
@@ -83,18 +90,21 @@ set industry ="Crypto"
 where industry like "Crypto%";
 
 #changing the format of a column
+
 select `date`,
 str_to_date(`date` ,'%m/%d/%Y') as format_date from layoffs_rownum_added; #check the date format correctly here
 update layoffs_rownum_added
 set `date` = str_to_date(`date` ,'%m/%d/%Y');
   
 #we changed the data type of date here - recommended to do on duplicate table
+
 alter table layoffs_rownum_added
 modify column `date` date; #check on left side for type
   
 select `date` from layoffs_rownum_added;
   
 -- 4.removing null data or blank data
+
 select * from layoffs_rownum_added 
 where total_laid_off is null;
 
@@ -102,6 +112,7 @@ select industry from layoffs_rownum_added
 where industry is null or industry = "";
 
 #here we are updating the empty spaces
+
 update layoffs_rownum_added
 set industry = null
 where industry =""; -- turned everything to null
@@ -122,6 +133,7 @@ and t2.industry is not null; #changing null data with not null data
 select * from layoffs_rownum_added where company="Airbnb"; #run this both industry will be travel one  used to be null
 
 #cleaning null data
+
 delete from layoffs_rownum_added
 where total_laid_off is null 
 and percentage_laid_off is null;
